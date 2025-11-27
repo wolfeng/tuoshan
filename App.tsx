@@ -10,9 +10,8 @@ const App: React.FC = () => {
       if (cameraMode === 'FREE') {
           setCameraMode('FOLLOW');
       } else {
-          // Switch back to FREE and Reset App State (Increment key to reset timeline)
+          // Switch back to FREE without resetting the app state
           setCameraMode('FREE');
-          setResetKey(prev => prev + 1);
       }
   };
 

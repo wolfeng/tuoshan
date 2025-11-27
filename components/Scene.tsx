@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, PerspectiveCamera } from '@react-three/drei';
 import * as THREE from 'three';
@@ -66,33 +66,41 @@ const CameraRig = ({
     }
     
     // --- FREE / INTRO MODE ---
+    let desiredPos = new THREE.Vector3();
+    let desiredLook = new THREE.Vector3();
+
     // 0s - 3.0s: Hold High View
     if (time < 3.0) {
-        cameraRef.current.position.lerp(START_POS, 0.1);
-        targetRef.current.lerp(new THREE.Vector3(0, 0, 0), 0.1);
+        desiredPos.copy(START_POS);
+        desiredLook.set(0, 0, 0);
     } 
     // 3.0s - 8.5s: Swoop Down to Low View
     else if (time < 8.5) {
         const progress = (time - 3.0) / 5.5;
         const ease = progress * progress * (3 - 2 * progress);
         
-        cameraRef.current.position.lerpVectors(START_POS, END_POS, ease);
-        
-        const startTarget = new THREE.Vector3(0, 0, 0);
-        const endTarget = new THREE.Vector3(100, 60, -50);
-        targetRef.current.lerpVectors(startTarget, endTarget, ease);
+        desiredPos.lerpVectors(START_POS, END_POS, ease);
+        desiredLook.lerpVectors(new THREE.Vector3(0, 0, 0), new THREE.Vector3(100, 60, -50), ease);
     } 
     // 8.5s+: Handover to Auto-Hover
     else if (isAutoFlying) {
         const hoverTime = (time - 8.5) * 0.2;
         
-        cameraRef.current.position.x = END_POS.x + Math.sin(hoverTime) * 10;
-        cameraRef.current.position.z = END_POS.z + Math.cos(hoverTime) * 10;
-        cameraRef.current.position.y = END_POS.y + Math.sin(hoverTime * 0.5) * 3;
-        
-        targetRef.current.lerp(new THREE.Vector3(100, 60, -50), 0.05);
+        desiredPos.set(
+            END_POS.x + Math.sin(hoverTime) * 10,
+            END_POS.y + Math.sin(hoverTime * 0.5) * 3,
+            END_POS.z + Math.cos(hoverTime) * 10
+        );
+        desiredLook.set(100, 60, -50);
+    } else {
+        // Manual control active (OrbitControls), do not override position
+        return;
     }
 
+    // Smoothly transition to the calculated target
+    // This provides the "Pull Back" effect when switching from Follow to Free mode
+    cameraRef.current.position.lerp(desiredPos, 0.05);
+    targetRef.current.lerp(desiredLook, 0.05);
     cameraRef.current.lookAt(targetRef.current);
   });
 
@@ -117,6 +125,14 @@ interface SceneProps {
 const Scene: React.FC<SceneProps> = ({ pixelRatio, viewMode, resetKey }) => {
   const [autoFly, setAutoFly] = useState(true);
   const birdRef = useRef<THREE.Group>(null);
+
+  // When switching back to FREE mode, ensure we resume auto-flight/hover
+  // so the camera returns to the cinematic position
+  useEffect(() => {
+    if (viewMode === 'FREE') {
+        setAutoFly(true);
+    }
+  }, [viewMode]);
 
   return (
     <div className="w-full h-full relative" style={{ backgroundColor: BG_COLOR }}>
