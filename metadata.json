@@ -1,0 +1,5 @@
+{
+  "name": "陀山鹦鹉",
+  "description": "A procedural, retro-styled 3D rainforest generator inspired by rainforest.arkivert.no. Features infinite terrain, volumetric-style fog, and pixelated aesthetics using React Three Fiber.",
+  "requestFramePermissions": []
+}
