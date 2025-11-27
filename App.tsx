@@ -49,7 +49,7 @@ const App: React.FC = () => {
 
         {/* Footer - Camera Controls (Bottom Center) */}
         {/* pb-20 added for mobile to clear browser toolbars */}
-        <footer className="flex justify-center items-end pb-20 md:pb-2 pointer-events-auto">
+        <footer className="flex justify-center items-end pb-22 md:pb-2 pointer-events-auto">
             <button 
             onClick={toggleCameraMode}
             className={`
