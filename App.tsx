@@ -4,7 +4,7 @@ import Scene from './components/Scene';
 const App: React.FC = () => {
   const [resolution] = useState(1.0); 
   const [cameraMode, setCameraMode] = useState<'FREE' | 'FOLLOW'>('FREE');
-  const [resetKey, setResetKey] = useState(0);
+  const [resetKey] = useState(0);
 
   const toggleCameraMode = () => {
       if (cameraMode === 'FREE') {

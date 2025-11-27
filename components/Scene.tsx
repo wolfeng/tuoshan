@@ -16,11 +16,13 @@ const FOG_COLOR = '#87CEEB';
 const CameraRig = ({ 
     isAutoFlying, 
     viewMode, 
-    birdRef 
+    birdRef,
+    controlsRef
 }: { 
     isAutoFlying: boolean, 
     viewMode: 'FREE' | 'FOLLOW', 
-    birdRef: React.RefObject<THREE.Group> 
+    birdRef: React.RefObject<THREE.Group>,
+    controlsRef: React.MutableRefObject<any>
 }) => {
   const cameraRef = useRef<THREE.PerspectiveCamera>(null);
   const targetRef = useRef(new THREE.Vector3(0, 0, 0));
@@ -31,7 +33,13 @@ const CameraRig = ({
   // Figure 1 Config (High View)
   const START_POS = new THREE.Vector3(-163, 253, 42);
   // Figure 2 Config (Low View)
+  // Reverted to original low altitude (35) as requested
   const END_POS = new THREE.Vector3(-308, 35, 206);
+  
+  // Adjusted LookAt target to be more central (0, 30, 0).
+  // Previous value (-50) was cutting off the Mountain (which is at X=180).
+  // This balances the Lake (Left) and Mountain (Right).
+  const END_LOOK_TARGET = new THREE.Vector3(0, 30, 0);
 
   useFrame((state) => {
     if (!cameraRef.current) return;
@@ -80,9 +88,10 @@ const CameraRig = ({
         const ease = progress * progress * (3 - 2 * progress);
         
         desiredPos.lerpVectors(START_POS, END_POS, ease);
-        desiredLook.lerpVectors(new THREE.Vector3(0, 0, 0), new THREE.Vector3(100, 60, -50), ease);
+        desiredLook.lerpVectors(new THREE.Vector3(0, 0, 0), END_LOOK_TARGET, ease);
     } 
     // 8.5s+: Handover to Auto-Hover
+    // OR if we switched back to FREE mode later (time > 8.5), we default to this logic
     else if (isAutoFlying) {
         const hoverTime = (time - 8.5) * 0.2;
         
@@ -91,7 +100,7 @@ const CameraRig = ({
             END_POS.y + Math.sin(hoverTime * 0.5) * 3,
             END_POS.z + Math.cos(hoverTime) * 10
         );
-        desiredLook.set(100, 60, -50);
+        desiredLook.copy(END_LOOK_TARGET);
     } else {
         // Manual control active (OrbitControls), do not override position
         return;
@@ -102,6 +111,13 @@ const CameraRig = ({
     cameraRef.current.position.lerp(desiredPos, 0.05);
     targetRef.current.lerp(desiredLook, 0.05);
     cameraRef.current.lookAt(targetRef.current);
+
+    // CRITICAL FIX: Sync OrbitControls target to current camera look-at
+    // This prevents the camera from "jumping" when the user first clicks/drags
+    if (controlsRef.current && isAutoFlying) {
+        controlsRef.current.target.copy(targetRef.current);
+        controlsRef.current.update();
+    }
   });
 
   return (
@@ -111,7 +127,7 @@ const CameraRig = ({
       position={[-163, 253, 42]} 
       fov={55} 
       near={0.1} 
-      far={600} 
+      far={700} 
     />
   );
 };
@@ -125,6 +141,7 @@ interface SceneProps {
 const Scene: React.FC<SceneProps> = ({ pixelRatio, viewMode, resetKey }) => {
   const [autoFly, setAutoFly] = useState(true);
   const birdRef = useRef<THREE.Group>(null);
+  const controlsRef = useRef<any>(null);
 
   // When switching back to FREE mode, ensure we resume auto-flight/hover
   // so the camera returns to the cinematic position
@@ -166,7 +183,8 @@ const Scene: React.FC<SceneProps> = ({ pixelRatio, viewMode, resetKey }) => {
             key={`cam-${resetKey}`} 
             isAutoFlying={autoFly} 
             viewMode={viewMode} 
-            birdRef={birdRef} 
+            birdRef={birdRef}
+            controlsRef={controlsRef}
         />
         
         <group>
@@ -179,6 +197,7 @@ const Scene: React.FC<SceneProps> = ({ pixelRatio, viewMode, resetKey }) => {
 
         {viewMode === 'FREE' && (
             <OrbitControls 
+                ref={controlsRef}
                 enableZoom={true} 
                 enablePan={true} 
                 maxPolarAngle={Math.PI / 2 - 0.1}
