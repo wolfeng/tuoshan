@@ -48,7 +48,7 @@ const App: React.FC = () => {
         </header>
 
         {/* Footer - Camera Controls (Bottom Center) */}
-        <footer className="flex justify-center items-end pointer-events-auto">
+        <footer className="flex justify-center items-end pb-2 pointer-events-auto">
             <button 
             onClick={toggleCameraMode}
             className={`
