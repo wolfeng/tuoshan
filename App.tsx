@@ -29,7 +29,7 @@ const App: React.FC = () => {
       </div>
       
       {/* UI Overlay */}
-      <div className="absolute inset-0 z-20 pointer-events-none flex flex-col justify-between p-2 md:p-8 text-[#1a2f23]">
+      <div className="absolute inset-0 z-20 pointer-events-none flex flex-col justify-between p-8 md:p-8 text-[#1a2f23]">
         
         {/* Header - Title and Description (Top Right) */}
         <header className="flex justify-end items-start pointer-events-auto mt-4 md:mt-8">
