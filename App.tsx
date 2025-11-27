@@ -52,8 +52,10 @@ const App: React.FC = () => {
         <footer className="flex justify-center items-end pb-20 md:pb-2 pointer-events-auto">
             <button 
             onClick={toggleCameraMode}
+            onContextMenu={(e) => e.preventDefault()}
+            style={{ WebkitTouchCallout: 'none' }}
             className={`
-                px-8 py-3 rounded-full font-bold text-lg transition-all duration-300 border backdrop-blur-md shadow-lg transform hover:scale-105 active:scale-95
+                px-8 py-3 rounded-full font-bold text-lg transition-all duration-300 border backdrop-blur-md shadow-lg transform hover:scale-105 active:scale-95 select-none
                 ${cameraMode === 'FREE' 
                     ? 'bg-white/5 border-white/30 text-white hover:bg-white/10' 
                     : 'bg-green-600/5 border-green-400/30 text-white hover:bg-green-500/10'}
